@@ -4,6 +4,7 @@ import Sort from '../view/sort.js';
 import TripFormCreate from '../view/trip-form-create.js';
 import TripFormEdit from '../view/trip-form-edit.js';
 import TripPoint from '../view/trip-point.js';
+import TripModel from '../model/trip-model.js';
 
 export default class TripPresenter {
   init() {
@@ -17,13 +18,18 @@ export default class TripPresenter {
     const sortComponent = new Sort();
     render(sortComponent, eventsContainer, RenderPosition.AFTERBEGIN);
 
-    const editFormComponent = new TripFormEdit();
-    render(editFormComponent, eventsListContainer, RenderPosition.AFTERBEGIN);
+    const model = new TripModel();
+    const points = model.getPoints();
 
-    for (let i = 0; i < 3; i++) {
-      const tripPointComponent = new TripPoint();
-      render(tripPointComponent, eventsListContainer);
+    if (points.length) {
+      const editFormComponent = new TripFormEdit(points[0]);
+      render(editFormComponent, eventsListContainer, RenderPosition.AFTERBEGIN);
     }
+
+    points.forEach((pointData) => {
+      const tripPointComponent = new TripPoint(pointData);
+      render(tripPointComponent, eventsListContainer);
+    });
 
     const createFormComponent = new TripFormCreate();
     render(createFormComponent, eventsListContainer);
