@@ -1,12 +1,12 @@
-import { createElement } from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
-export default class TripPoint {
+export default class TripPoint extends AbstractView {
   constructor(pointData) {
+    super();
     this._point = pointData;
-    this._element = null;
   }
 
-  getTemplate() {
+  get template() {
     const date = this._point.startTime.split('T')[0];
     const startTime = this._point.startTime.substring(11, 16);
     const endTime = this._point.endTime.substring(11, 16);
@@ -53,14 +53,7 @@ export default class TripPoint {
 </li>`;
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
+  setEditClickHandler(handler) {
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', handler);
   }
 }

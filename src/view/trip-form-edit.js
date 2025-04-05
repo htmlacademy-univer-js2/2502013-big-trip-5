@@ -1,7 +1,8 @@
-import { createElement } from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
-export default class TripFormEdit {
+export default class TripFormEdit extends AbstractView {
   constructor(pointData) {
+    super();
     this._point = pointData || {
       type: 'flight',
       destination: { name: '', description: '', photos: [] },
@@ -10,10 +11,9 @@ export default class TripFormEdit {
       price: '',
       offers: []
     };
-    this._element = null;
   }
 
-  getTemplate() {
+  get template() {
     const { type, destination, startTime, endTime, price, offers } = this._point;
     const offersMarkup = offers.length
       ? `<div class="event__available-offers">
@@ -150,7 +150,7 @@ export default class TripFormEdit {
               <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
               <button class="event__reset-btn" type="reset">Delete</button>
               <button class="event__rollup-btn" type="button">
-                  <span class="visually-hidden">Open event</span>
+                  <span class="visually-hidden">Close event</span>
               </button>
           </header>
           <section class="event__details">
@@ -169,14 +169,11 @@ export default class TripFormEdit {
   </li>`;
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-    return this._element;
+  setFormSubmitHandler(handler) {
+    this.element.querySelector('form').addEventListener('submit', handler);
   }
 
-  removeElement() {
-    this._element = null;
+  setCancelClickHandler(handler) {
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', handler);
   }
 }

@@ -1,7 +1,8 @@
-import { createElement } from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
-export default class TripFormCreate {
+export default class TripFormCreate extends AbstractView {
   constructor(pointData) {
+    super();
     this._point = pointData || {
       type: 'flight',
       destination: { name: '', description: '', photos: [] },
@@ -10,10 +11,9 @@ export default class TripFormCreate {
       price: 0,
       offers: []
     };
-    this._element = null;
   }
 
-  getTemplate() {
+  get template() {
     const { type, destination, startTime, endTime, price, offers } = this._point;
     const offersMarkup = offers.length
       ? `<div class="event__available-offers">
@@ -144,16 +144,5 @@ export default class TripFormCreate {
           </section>
       </form>
   </li>`;
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
   }
 }
