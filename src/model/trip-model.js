@@ -8,4 +8,11 @@ export default class TripModel {
   getPoints() {
     return this._points;
   }
+
+  updatePoint(point) {
+    const index = this._points.findIndex((p) => p.id === point.id);
+    if (index !== -1) {
+      this._points[index] = point;
+    }
+  }
 }
