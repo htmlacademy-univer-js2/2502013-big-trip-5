@@ -1,7 +1,7 @@
 import { render } from '../render.js';
 import TripPointView from '../view/trip-point.js';
 import TripFormEditView from '../view/trip-form-edit.js';
-import { replace } from '../framework/render';
+import {remove, replace} from '../framework/render';
 
 const Mode = {
   DEFAULT: 'DEFAULT',
@@ -36,15 +36,11 @@ export default class PointPresenter {
 
     if (prevPointComponent === null) {
       render(this._pointComponent, this._container);
+    } else if (this._mode === Mode.DEFAULT) {
+      replace(this._pointComponent, prevPointComponent);
     } else {
-      if (this._mode === Mode.DEFAULT) {
-        replace(this._pointComponent, prevPointComponent);
-      } else {
-        this._mode = Mode.DEFAULT;
-        replace(this._pointComponent, prevEditComponent);
-      }
-      prevEditComponent.removeElement();
-      prevPointComponent.removeElement();
+      this._mode = Mode.DEFAULT;
+      replace(this._pointComponent, prevEditComponent);
     }
   }
 
@@ -84,7 +80,7 @@ export default class PointPresenter {
   };
 
   destroy() {
-    this._pointComponent.remove();
-    this._editComponent.remove();
+    remove(this._pointComponent);
+    remove(this._editComponent);
   }
 }
