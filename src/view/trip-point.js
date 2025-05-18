@@ -1,4 +1,5 @@
 import AbstractView from '../framework/view/abstract-view.js';
+import {DESTINATIONS} from '../mock/trip-data';
 
 export default class TripPoint extends AbstractView {
   constructor(pointData) {
@@ -10,7 +11,8 @@ export default class TripPoint extends AbstractView {
     const date = this._point.startTime.split('T')[0];
     const startTime = this._point.startTime.substring(11, 16);
     const endTime = this._point.endTime.substring(11, 16);
-    const title = `${this._point.type} to ${this._point.destination.name}`;
+    const dest = DESTINATIONS.find((d) => d.id === this._point.destination);
+    const title = `${this._point.type} to ${dest.name}`;
     const offersMarkup = this._point.offers?.length
       ? `<h4 class="visually-hidden">Offers:</h4>
          <ul class="event__selected-offers">
