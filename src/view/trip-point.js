@@ -1,5 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import {DESTINATIONS} from '../mock/trip-data';
+import dayjs from 'dayjs';
 
 export default class TripPoint extends AbstractView {
   constructor(pointData) {
@@ -8,9 +9,15 @@ export default class TripPoint extends AbstractView {
   }
 
   get template() {
-    const date = this._point.startTime.split('T')[0];
-    const startTime = this._point.startTime.substring(11, 16);
-    const endTime = this._point.endTime.substring(11, 16);
+    const dateISO = dayjs(this._point.startTime).format('YYYY-MM-DD');
+    const dateDisplay = dayjs(this._point.startTime).format('MMM D').toUpperCase();
+    const startTime = dayjs(this._point.startTime).format('HH:mm');
+    const endTime = dayjs(this._point.endTime).format('HH:mm');
+    const diffMs = dayjs(this._point.endTime).diff(dayjs(this._point.startTime));
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const duration = `${hours.toString().padStart(2, '0')}H ${minutes.toString().padStart(2, '0')}M`;
+
     const dest = DESTINATIONS.find((d) => d.id === this._point.destination);
     const title = `${this._point.type} to ${dest.name}`;
     const offersMarkup = this._point.offers?.length
@@ -26,7 +33,7 @@ export default class TripPoint extends AbstractView {
 
     return `<li class="trip-events__item">
   <div class="event">
-    <time class="event__date" datetime="${date}">${date}</time>
+    <time class="event__date" datetime="${dateISO}">${dateDisplay}</time>
     <div class="event__type">
       <img class="event__type-icon" width="42" height="42" src="img/icons/${this._point.type}.png" alt="Event type icon">
     </div>
@@ -37,6 +44,7 @@ export default class TripPoint extends AbstractView {
         &mdash;
         <time class="event__end-time" datetime="${this._point.endTime}">${endTime}</time>
       </p>
+      <p class="event__duration">${duration}</p>
     </div>
     <p class="event__price">
       &euro;&nbsp;<span class="event__price-value">${this._point.price}</span>

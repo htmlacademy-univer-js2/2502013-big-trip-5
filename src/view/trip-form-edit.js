@@ -1,6 +1,9 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { DESTINATIONS } from '../mock/trip-data.js';
 import {EVENT_TYPES, OFFERS} from '../const';
+import dayjs from 'dayjs';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
 export default class TripFormEdit extends AbstractStatefulView {
   constructor(pointData) {
@@ -15,10 +18,13 @@ export default class TripFormEdit extends AbstractStatefulView {
     this._submitHandler = null;
     this._cancelHandler = null;
     this._restoreHandlers();
+    this._setFlatpickr();
   }
 
   get template() {
     const { type, startTime, endTime, price } = this._state;
+    const startValue = dayjs(startTime).format('DD/MM/YY HH:mm');
+    const endValue = dayjs(endTime).format('DD/MM/YY HH:mm');
     const offers = this._getOffersForType(type);
     const destination = DESTINATIONS.find((dest) => dest.id === this._state.destination);
     const offersMarkup = offers.length
@@ -92,11 +98,11 @@ export default class TripFormEdit extends AbstractStatefulView {
               <div class="event__field-group  event__field-group--time">
                   <label class="visually-hidden" for="event-start-time-1">From</label>
                   <input class="event__input  event__input--time" id="event-start-time-1" type="text"
-                         name="event-start-time" value="${startTime}">
+                         name="event-start-time" value="${startValue}">
                   &mdash;
                   <label class="visually-hidden" for="event-end-time-1">To</label>
                   <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time"
-                         value="${endTime}">
+                         value="${endValue}">
               </div>
 
               <div class="event__field-group  event__field-group--price">
@@ -181,5 +187,39 @@ export default class TripFormEdit extends AbstractStatefulView {
     if (this._cancelHandler) {
       this.element.querySelector('.event__rollup-btn').addEventListener('click', this._cancelClickHandler);
     }
+    this._setFlatpickr();
+  }
+
+  _onStartTimeChange = ([selectedDate]) => {
+    if (this._state.endTime < selectedDate) {
+      this.updateElement({ endTime: selectedDate });
+    }
+    this.updateElement({ startTime: selectedDate });
+  };
+
+  _onEndTimeChange = ([selectedDate]) => {
+    if (this._state.startTime > selectedDate) {
+      this.updateElement({ startTime: selectedDate });
+    }
+    this.updateElement({ endTime: selectedDate });
+  };
+
+  _setFlatpickr() {
+    if (this._startPicker) {
+      this._startPicker.destroy();
+      this._endPicker.destroy();
+    }
+    this._startPicker = flatpickr(this.element.querySelector('#event-start-time-1'), {
+      enableTime: true,
+      dateFormat: 'd/m/y H:i',
+      defaultDate: this._state.startTime,
+      onChange: this._onStartTimeChange,
+    });
+    this._endPicker = flatpickr(this.element.querySelector('#event-end-time-1'), {
+      enableTime: true,
+      dateFormat: 'd/m/y H:i',
+      defaultDate: this._state.endTime,
+      onChange: this._onEndTimeChange,
+    });
   }
 }
