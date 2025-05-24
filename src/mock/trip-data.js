@@ -28,7 +28,8 @@ export const generateTripPoints = () => [
     startTime: '2020-09-10T10:00',
     endTime: '2020-09-10T11:00',
     price: 20,
-    isFavorite: false
+    isFavorite: false,
+    offers: []
   },
   {
     id: '2',
@@ -38,6 +39,7 @@ export const generateTripPoints = () => [
     endTime: '2020-09-11T13:35',
     price: 160,
     isFavorite: false,
+    offers: []
   },
   {
     id: '3',
@@ -47,5 +49,6 @@ export const generateTripPoints = () => [
     endTime: '2020-09-12T09:25',
     price: 100,
     isFavorite: true,
+    offers: []
   }
 ];

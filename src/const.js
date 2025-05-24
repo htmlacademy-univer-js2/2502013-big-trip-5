@@ -1,4 +1,4 @@
-export const EVENT_TYPES = [
+const EVENT_TYPES = [
   { type: 'taxi', label: 'Taxi' },
   { type: 'bus', label: 'Bus' },
   { type: 'train', label: 'Train' },
@@ -11,7 +11,7 @@ export const EVENT_TYPES = [
 ];
 
 
-export const OFFERS = {
+const OFFERS = {
   taxi: [
     { id: 'offer-luggage', title: 'Add luggage', price: 50 },
     { id: 'offer-comfort', title: 'Switch to comfort', price: 80 }
@@ -21,3 +21,11 @@ export const OFFERS = {
   ],
   flight: []
 };
+
+const USER_ACTION = {
+  ADD_POINT: 'ADD_POINT',
+  UPDATE_POINT: 'UPDATE_POINT',
+  DELETE_POINT: 'DELETE_POINT',
+};
+
+export { OFFERS, EVENT_TYPES, USER_ACTION };
