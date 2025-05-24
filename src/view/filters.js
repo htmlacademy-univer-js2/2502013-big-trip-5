@@ -1,15 +1,16 @@
 import AbstractView from '../framework/view/abstract-view.js';
 
 export default class Filters extends AbstractView {
+  #filtersData;
   constructor(filtersData) {
     super();
-    this._filtersData = filtersData;
+    this.#filtersData = filtersData;
   }
 
   get template() {
-    const filtersMarkup = this._filtersData.map((filter) => `
+    const filtersMarkup = this.#filtersData.map((filter) => `
       <div class="trip-filters__filter">
-        <input id="filter-${filter.name}" class="trip-filters__filter-input visually-hidden" type="radio" name="trip-filter" value="${filter.name}" ${filter.isChecked ? 'checked' : ''} ${filter.isDisabled ? 'disabled' : ''}>
+        <input id="filter-${filter.name}" class="trip-filters__filter-input visually-hidden" type="radio" name="trip-filter" value="${filter.name}" ${filter.isChecked ? 'checked' : ''}>
         <label class="trip-filters__filter-label" for="filter-${filter.name}">${filter.label}</label>
       </div>
     `).join('');
@@ -21,4 +22,18 @@ export default class Filters extends AbstractView {
   </form>
 </div>`;
   }
+
+  setFilterChangeHandler(callback) {
+    this._callback = callback;
+    this.element.addEventListener('change', this.#filterTypeChangeHandler);
+  }
+
+  #filterTypeChangeHandler = (evt) => {
+    evt.preventDefault();
+    const filterType = evt.target.value;
+    if (!filterType) {
+      return;
+    }
+    this._callback(filterType);
+  };
 }

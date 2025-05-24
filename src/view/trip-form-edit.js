@@ -6,32 +6,32 @@ import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
 export default class TripFormEdit extends AbstractStatefulView {
+  #submitHandler = null;
+  #deleteHandler = null;
+  #cancelHandler = null;
+
   constructor(pointData) {
     super();
-    this._state = pointData || {
-      type: EVENT_TYPES[0].type,
-      destination: DESTINATIONS[0].id,
-      startTime: Date.now(),
-      endTime: Date.now(),
-      price: 0,
-    };
-    this._submitHandler = null;
-    this._cancelHandler = null;
+    this._state = pointData;
     this._restoreHandlers();
-    this._setFlatpickr();
   }
 
   get template() {
     const { type, startTime, endTime, price } = this._state;
     const startValue = dayjs(startTime).format('DD/MM/YY HH:mm');
     const endValue = dayjs(endTime).format('DD/MM/YY HH:mm');
-    const offers = this._getOffersForType(type);
-    const destination = DESTINATIONS.find((dest) => dest.id === this._state.destination);
+    const offers = this.#getOffersForType(type);
+    const destination = DESTINATIONS.find((dest) => dest.id === this._state.destination) ?? {
+      id: '',
+      name: '',
+      description: '',
+      photos: [],
+    };
     const offersMarkup = offers.length
       ? `<div class="event__available-offers">
           ${offers.map((offer) => `
             <div class="event__offer-selector">
-              <input class="event__offer-checkbox visually-hidden" id="event-offer-${offer.id}" type="checkbox" name="event-offer-${offer.id}" checked>
+              <input class="event__offer-checkbox visually-hidden" id="event-offer-${offer.id}" type="checkbox" name="event-offer-${offer.id}" ${this._state.offers.some((o) => o.id === offer.id) ? 'checked' : ''}>
               <label class="event__offer-label" for="event-offer-${offer.id}">
                 <span class="event__offer-title">${offer.title}</span>
                 &plus;&euro;&nbsp;
@@ -86,7 +86,7 @@ export default class TripFormEdit extends AbstractStatefulView {
                   <label class="event__label  event__type-output" for="event-destination-1">
                       ${type}
                   </label>
-                  <input class="event__input  event__input--destination" id="event-destination-1" type="text"
+                  <input required class="event__input  event__input--destination" id="event-destination-1" type="text"
                          name="event-destination" value="${destination.id}" list="destination-list-1">
                   <datalist id="destination-list-1">
                       ${DESTINATIONS.map((dest) => `
@@ -110,7 +110,7 @@ export default class TripFormEdit extends AbstractStatefulView {
                       <span class="visually-hidden">Price</span>
                       &euro;
                   </label>
-                  <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price"
+                  <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price"
                          value="${price}">
               </div>
 
@@ -136,16 +136,16 @@ export default class TripFormEdit extends AbstractStatefulView {
   </li>`;
   }
 
-  _getOffersForType(type) {
+  #getOffersForType(type) {
     return OFFERS[type] || [];
   }
 
-  _typeChangeHandler = (evt) => {
+  #typeChangeHandler = (evt) => {
     const type = evt.target.value;
-    this.updateElement({ type, offers: this._getOffersForType(type) });
+    this.updateElement({ type, offers: this.#getOffersForType(type) });
   };
 
-  _destinationChangeHandler = (evt) => {
+  #destinationChangeHandler = (evt) => {
     const dest = DESTINATIONS.find((d) => d.id === evt.target.value);
     if (dest) {
       this.updateElement({
@@ -158,68 +158,99 @@ export default class TripFormEdit extends AbstractStatefulView {
     }
   };
 
+  #priceChangeHandler = (evt) => {
+    evt.preventDefault();
+    this.updateElement({ price: Number(evt.target.value) });
+  };
+
+  #offerChangeHandler = (evt) => {
+    const offerId = evt.target.id.replace('event-offer-', '');
+    const currentOffers = [...this._state.offers];
+    if (evt.target.checked) {
+      const newOffer = this.#getOffersForType(this._state.type).find((offer) => offer.id === offerId);
+      if (newOffer) {
+        currentOffers.push(newOffer);
+      }
+    } else {
+      const index = currentOffers.findIndex((offer) => offer.id === offerId);
+      if (index !== -1) {
+        currentOffers.splice(index, 1);
+      }
+    }
+    this.updateElement({ offers: currentOffers });
+
+  };
+
   setFormSubmitHandler(callback) {
-    this._submitHandler = callback;
-    this.element.querySelector('form').addEventListener('submit', this._formSubmitHandler);
+    this.#submitHandler = callback;
+    this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
   }
 
   setCancelClickHandler(callback) {
-    this._cancelHandler = callback;
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this._cancelClickHandler);
+    this.#cancelHandler = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#cancelClickHandler);
   }
 
-  _formSubmitHandler = (evt) => {
-    evt.preventDefault();
-    this._submitHandler?.(this._state);
-  };
-
-  _cancelClickHandler = (evt) => {
-    evt.preventDefault();
-    this._cancelHandler?.();
-  };
+  setDeleteClickHandler(callback) {
+    this.#deleteHandler = callback;
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#deleteClickHandler);
+  }
 
   _restoreHandlers() {
-    this.element.querySelectorAll('input[name="event-type"]').forEach((input) => input.addEventListener('change', this._typeChangeHandler));
-    this.element.querySelector('input[name="event-destination"]').addEventListener('change', this._destinationChangeHandler);
-    if (this._submitHandler) {
-      this.element.querySelector('form').addEventListener('submit', this._formSubmitHandler);
+    this.element.querySelectorAll('input[name="event-type"]').forEach((input) => input.addEventListener('change', this.#typeChangeHandler));
+    this.element.querySelector('input[name="event-destination"]').addEventListener('change', this.#destinationChangeHandler);
+    this.element.querySelector('.event__input--price').addEventListener('change', this.#priceChangeHandler);
+    this.element.querySelectorAll('.event__offer-checkbox').forEach((checkbox) => checkbox.addEventListener('change', this.#offerChangeHandler));
+    if (this.#submitHandler) {
+      this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
     }
-    if (this._cancelHandler) {
-      this.element.querySelector('.event__rollup-btn').addEventListener('click', this._cancelClickHandler);
+    if (this.#cancelHandler) {
+      this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#cancelClickHandler);
     }
-    this._setFlatpickr();
+    this.#setFlatpickr();
   }
 
-  _onStartTimeChange = ([selectedDate]) => {
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this.#submitHandler?.(this._state);
+  };
+
+  #cancelClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#cancelHandler?.();
+  };
+
+  #deleteClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#deleteHandler?.(this._state.id);
+  };
+
+  #onStartTimeChange = ([selectedDate]) => {
     if (this._state.endTime < selectedDate) {
       this.updateElement({ endTime: selectedDate });
     }
     this.updateElement({ startTime: selectedDate });
   };
 
-  _onEndTimeChange = ([selectedDate]) => {
+  #onEndTimeChange = ([selectedDate]) => {
     if (this._state.startTime > selectedDate) {
       this.updateElement({ startTime: selectedDate });
     }
     this.updateElement({ endTime: selectedDate });
   };
 
-  _setFlatpickr() {
-    if (this._startPicker) {
-      this._startPicker.destroy();
-      this._endPicker.destroy();
-    }
-    this._startPicker = flatpickr(this.element.querySelector('#event-start-time-1'), {
+  #setFlatpickr() {
+    flatpickr(this.element.querySelector('#event-start-time-1'), {
       enableTime: true,
       dateFormat: 'd/m/y H:i',
       defaultDate: this._state.startTime,
-      onChange: this._onStartTimeChange,
+      onChange: this.#onStartTimeChange,
     });
-    this._endPicker = flatpickr(this.element.querySelector('#event-end-time-1'), {
+    flatpickr(this.element.querySelector('#event-end-time-1'), {
       enableTime: true,
       dateFormat: 'd/m/y H:i',
       defaultDate: this._state.endTime,
-      onChange: this._onEndTimeChange,
+      onChange: this.#onEndTimeChange,
     });
   }
 }
