@@ -1,6 +1,6 @@
 import Observable from '../framework/observable.js';
 
-export const FilterType = {
+export const FILTER_TYPE = {
   EVERYTHING: 'everything',
   FUTURE: 'future',
   PRESENT: 'present',
@@ -12,10 +12,11 @@ export const UPDATE_TYPE = {
   LOADING: 'loading',
   ERROR: 'error',
   INIT: 'init',
+  UPDATE: 'update',
 };
 
 export default class FilterModel extends Observable {
-  #filter = FilterType.EVERYTHING;
+  #filter = FILTER_TYPE.EVERYTHING;
 
   getFilter() {
     return this.#filter;

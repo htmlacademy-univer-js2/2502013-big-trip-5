@@ -1,5 +1,6 @@
 import Observable from '../framework/observable.js';
 import { adaptPointToClient, adaptDestinationToClient, adaptOfferToClient } from '../adapter/data-adapter.js';
+import {UPDATE_TYPE} from "./filter-model";
 
 const LoadingState = {
   LOADING: 'LOADING',
@@ -68,7 +69,7 @@ export default class TripModel extends Observable {
       if (index !== -1) {
         this.#points[index] = adaptedPoint;
       }
-      this._notify('update', this.#points);
+      this._notify(UPDATE_TYPE.UPDATE, this.#points);
       return adaptedPoint;
     } catch (err) {
       throw new Error('Failed to update point');
@@ -81,7 +82,7 @@ export default class TripModel extends Observable {
       const adaptedPoint = adaptPointToClient(newPoint);
 
       this.#points.push(adaptedPoint);
-      this._notify('update', this.#points);
+      this._notify(UPDATE_TYPE.UPDATE, this.#points);
       return adaptedPoint;
     } catch (err) {
       throw new Error('Failed to add point');
@@ -92,7 +93,7 @@ export default class TripModel extends Observable {
     try {
       await this.#apiService.deletePoint({ id: pointId });
       this.#points = this.#points.filter((p) => p.id !== pointId);
-      this._notify('update', this.#points);
+      this._notify(UPDATE_TYPE.UPDATE, this.#points);
     } catch (err) {
       throw new Error('Failed to delete point');
     }

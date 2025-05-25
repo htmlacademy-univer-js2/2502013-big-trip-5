@@ -10,7 +10,7 @@ export default class Filters extends AbstractView {
   get template() {
     const filtersMarkup = this.#filtersData.map((filter) => `
       <div class="trip-filters__filter">
-        <input id="filter-${filter.name}" class="trip-filters__filter-input visually-hidden" type="radio" name="trip-filter" value="${filter.name}" ${filter.isChecked ? 'checked' : ''}>
+        <input id="filter-${filter.name}" class="trip-filters__filter-input visually-hidden" type="radio" name="trip-filter" value="${filter.name}" ${filter.isChecked ? 'checked' : ''} ${filter.isDisabled ? 'disabled' : ''}>
         <label class="trip-filters__filter-label" for="filter-${filter.name}">${filter.label}</label>
       </div>
     `).join('');

@@ -1,6 +1,7 @@
 import FilterModel, {UPDATE_TYPE} from './model/filter-model.js';
 import FilterPresenter from './presenter/filter-presenter.js';
 import TripPresenter from './presenter/trip-presenter.js';
+import TripInfoPresenter from './presenter/trip-info-presenter.js';
 import TripModel from './model/trip-model.js';
 import TripApiService from './api/trip-api-service.js';
 import { API_BASE_URL, API_AUTHORIZATION } from './const.js';
@@ -16,8 +17,12 @@ const filterModel = new FilterModel();
 createEventButton.disabled = true;
 
 const filterContainer = document.querySelector('.trip-controls__filters');
-const filterPresenter = new FilterPresenter(filterContainer, filterModel);
+const filterPresenter = new FilterPresenter(filterContainer, filterModel, tripModel);
 filterPresenter.init();
+
+const tripMainElement = document.querySelector('.trip-main');
+const tripInfoPresenter = new TripInfoPresenter(tripMainElement, tripModel);
+tripInfoPresenter.init();
 
 const tripPresenter = new TripPresenter(tripModel, filterModel, eventsContainer, eventsListContainer);
 
