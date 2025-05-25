@@ -93,6 +93,10 @@ export default class PointPresenter {
     this.#changeData(USER_ACTION.DELETE_POINT, this.#point);
   };
 
+  getView() {
+    return this.#mode === Mode.EDITING ? this.#editComponent : this.#pointComponent;
+  }
+
   #escKeyDownHandler = (evt) => {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();

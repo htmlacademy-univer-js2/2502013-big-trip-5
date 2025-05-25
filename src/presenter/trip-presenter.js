@@ -7,6 +7,12 @@ import PointPresenter from './point-presenter.js';
 import {FilterType, UPDATE_TYPE} from '../model/filter-model.js';
 import {remove} from '../framework/render';
 import {EVENT_TYPES, USER_ACTION} from '../const';
+import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
+
+const TimeLimit = {
+  LOWER_LIMIT: 350,
+  UPPER_LIMIT: 1000,
+};
 
 export default class TripPresenter {
   #model = null;
@@ -20,6 +26,10 @@ export default class TripPresenter {
   #loadingComponent = null;
   #errorComponent = null;
   #newPointPresenter = null;
+  #uiBlocker = new UiBlocker({
+    lowerLimit: TimeLimit.LOWER_LIMIT,
+    upperLimit: TimeLimit.UPPER_LIMIT
+  });
 
   constructor(model, filterModel, eventsContainer, eventsListContainer) {
     this.#model = model;
@@ -179,6 +189,7 @@ export default class TripPresenter {
   };
 
   #handleDataChange = async (type, updatedPoint) => {
+    this.#uiBlocker.block();
     try {
       switch (type) {
         case USER_ACTION.ADD_POINT:
@@ -197,14 +208,18 @@ export default class TripPresenter {
     } catch (err) {
       if (type === USER_ACTION.ADD_POINT && this.#newPointPresenter) {
         this.#newPointPresenter.resetFormState();
+        this.#newPointPresenter.getView().shake();
       } else {
         const pointPresenter = this.#pointPresenters.find(
           (p) => p.getPointId() === updatedPoint.id
         );
         if (pointPresenter) {
           pointPresenter.resetFormState();
+          pointPresenter.getView().shake();
         }
       }
+    } finally {
+      this.#uiBlocker.unblock();
     }
   };
 
