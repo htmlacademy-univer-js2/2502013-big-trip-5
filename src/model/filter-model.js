@@ -7,8 +7,11 @@ export const FilterType = {
   PAST: 'past',
 };
 
-export const UpdateType = {
+export const UPDATE_TYPE = {
   FILTER: 'filter',
+  LOADING: 'loading',
+  ERROR: 'error',
+  INIT: 'init',
 };
 
 export default class FilterModel extends Observable {

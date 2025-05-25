@@ -1,11 +1,15 @@
 import AbstractView from '../framework/view/abstract-view.js';
-import {DESTINATIONS} from '../mock/trip-data';
 import dayjs from 'dayjs';
 
 export default class TripPoint extends AbstractView {
-  constructor(pointData) {
+  #destinations = [];
+  #offers = [];
+
+  constructor(pointData, destinations = [], offers = []) {
     super();
     this._point = pointData;
+    this.#offers = offers;
+    this.#destinations = destinations;
   }
 
   get template() {
@@ -17,13 +21,13 @@ export default class TripPoint extends AbstractView {
     const hours = Math.floor(diffMs / (1000 * 60 * 60));
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
     const duration = `${hours.toString().padStart(2, '0')}H ${minutes.toString().padStart(2, '0')}M`;
-
-    const dest = DESTINATIONS.find((d) => d.id === this._point.destination);
-    const title = `${this._point.type} to ${dest.name}`;
-    const offersMarkup = this._point.offers?.length
+    const dest = this.#destinations.find((d) => d.id === this._point.destination);
+    const title = `${this._point.type} to ${dest?.name || 'Unknown'}`;
+    const pointOffers = this.#offers.find((o) => o.type === this._point.type)?.offers.filter((offer) => this._point.offers.includes(offer.id)) || [];
+    const offersMarkup = pointOffers.length
       ? `<h4 class="visually-hidden">Offers:</h4>
          <ul class="event__selected-offers">
-           ${this._point.offers.map((offer) => `<li class="event__offer">
+           ${pointOffers.map((offer) => `<li class="event__offer">
              <span class="event__offer-title">${offer.title}</span>
              &plus;&euro;&nbsp;
              <span class="event__offer-price">${offer.price}</span>

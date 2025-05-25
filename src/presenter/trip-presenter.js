@@ -1,8 +1,10 @@
 import {render, RenderPosition} from '../render.js';
 import Sort from '../view/sort.js';
 import TripEmpty from '../view/trip-empty.js';
+import LoadingView from '../view/loading.js';
+import ErrorView from '../view/error.js';
 import PointPresenter from './point-presenter.js';
-import {FilterType, UpdateType} from '../model/filter-model.js';
+import {FilterType, UPDATE_TYPE} from '../model/filter-model.js';
 import {remove} from '../framework/render';
 import {EVENT_TYPES, USER_ACTION} from '../const';
 
@@ -15,12 +17,15 @@ export default class TripPresenter {
   #eventsContainer = null;
   #eventsListContainer = null;
   #emptyComponent = null;
+  #loadingComponent = null;
+  #errorComponent = null;
   #newPointPresenter = null;
 
   constructor(model, filterModel, eventsContainer, eventsListContainer) {
     this.#model = model;
     this.#filterModel = filterModel;
     this.#filterModel.addObserver(this.#handleModelEvent);
+    this.#model.addObserver(this.#handleModelEvent);
     this.#eventsContainer = eventsContainer;
     this.#eventsListContainer = eventsListContainer;
   }
@@ -30,6 +35,26 @@ export default class TripPresenter {
   }
 
   #renderBoard() {
+    if (this.#model.loadingState === 'LOADING') {
+      this.#renderLoading();
+    } else if (this.#model.loadingState === 'ERROR') {
+      this.#renderError();
+    } else {
+      this.#renderContent();
+    }
+  }
+
+  #renderLoading() {
+    this.#loadingComponent = new LoadingView();
+    render(this.#loadingComponent, this.#eventsListContainer);
+  }
+
+  #renderError() {
+    this.#errorComponent = new ErrorView();
+    render(this.#errorComponent, this.#eventsListContainer);
+  }
+
+  #renderContent() {
     if (this.#sortComponent) {
       remove(this.#sortComponent);
     }
@@ -95,7 +120,9 @@ export default class TripPresenter {
       const presenter = new PointPresenter(
         this.#eventsListContainer,
         this.#handleDataChange,
-        this.#handleModeChange
+        this.#handleModeChange,
+        this.#model.getDestinations(),
+        this.#model.getOffers()
       );
       presenter.init(point);
       this.#pointPresenters.push(presenter);
@@ -103,7 +130,7 @@ export default class TripPresenter {
   }
 
   handleNewPointFormOpen = () => {
-    if (this.#newPointPresenter) {
+    if (this.#newPointPresenter || this.#model.loadingState !== 'SUCCESS') {
       return;
     }
     if (this.#emptyComponent) {
@@ -111,17 +138,23 @@ export default class TripPresenter {
       this.#emptyComponent = null;
     }
     this.#currentSortType = 'day';
-    this.#filterModel.setFilter(UpdateType.FILTER, FilterType.EVERYTHING);
-
+    this.#filterModel.setFilter(UPDATE_TYPE.FILTER, FilterType.EVERYTHING);
+    this.#handleModeChange();
     this.#newPointPresenter = new PointPresenter(
       this.#eventsListContainer,
       this.#handleDataChange,
-      this.#handleNewPointFormClose
+      this.#handleNewPointFormClose,
+      this.#model.getDestinations(),
+      this.#model.getOffers()
     );
     this.#newPointPresenter.init(
       {
         type: EVENT_TYPES[0].type,
+        destination: '',
+        startTime: new Date().toISOString(),
+        endTime: new Date().toISOString(),
         price: 0,
+        isFavorite: false,
         offers: [],
       }, true
     );
@@ -145,24 +178,34 @@ export default class TripPresenter {
     this.#renderBoard();
   };
 
-  #handleDataChange = (type, updatedPoint) => {
-    switch (type) {
-      case USER_ACTION.ADD_POINT:
-        this.#newPointPresenter.destroy();
-        this.#newPointPresenter = null;
-        this.#model.addPoint(updatedPoint);
-        break;
-      case USER_ACTION.UPDATE_POINT:
-        this.#model.updatePoint(updatedPoint);
-        break;
-      case USER_ACTION.DELETE_POINT:
-        this.#model.deletePoint(updatedPoint.id);
-        break;
-      default:
-        throw new Error(`Unknown action type: ${type}`);
+  #handleDataChange = async (type, updatedPoint) => {
+    try {
+      switch (type) {
+        case USER_ACTION.ADD_POINT:
+          await this.#model.addPoint(updatedPoint);
+          this.#newPointPresenter.destroy();
+          this.#newPointPresenter = null;
+          break;
+        case USER_ACTION.UPDATE_POINT:
+          await this.#model.updatePoint(updatedPoint);
+          break;
+        case USER_ACTION.DELETE_POINT:
+          await this.#model.deletePoint(updatedPoint.id);
+          break;
+        default:
+      }
+    } catch (err) {
+      if (type === USER_ACTION.ADD_POINT && this.#newPointPresenter) {
+        this.#newPointPresenter.resetFormState();
+      } else {
+        const pointPresenter = this.#pointPresenters.find(
+          (p) => p.getPointId() === updatedPoint.id
+        );
+        if (pointPresenter) {
+          pointPresenter.resetFormState();
+        }
+      }
     }
-    this.#clearPoints();
-    this.#renderBoard();
   };
 
   #handleModeChange = () => {
@@ -172,9 +215,36 @@ export default class TripPresenter {
   };
 
   #handleModelEvent = (updateType) => {
-    if (updateType === UpdateType.FILTER) {
+    if (updateType === UPDATE_TYPE.FILTER) {
       this.#currentSortType = 'day';
+      this.#renderBoard();
+    } else if (updateType === UPDATE_TYPE.LOADING) {
+      this.#clearBoard();
+      this.#renderLoading();
+    } else if (updateType === UPDATE_TYPE.ERROR) {
+      this.#clearBoard();
+      this.#renderError();
+    } else if (updateType === UPDATE_TYPE.INIT) {
+      this.#clearBoard();
+      this.#renderContent();
+    } else {
       this.#renderBoard();
     }
   };
+
+  #clearBoard() {
+    if (this.#loadingComponent) {
+      remove(this.#loadingComponent);
+      this.#loadingComponent = null;
+    }
+    if (this.#errorComponent) {
+      remove(this.#errorComponent);
+      this.#errorComponent = null;
+    }
+    if (this.#sortComponent) {
+      remove(this.#sortComponent);
+      this.#sortComponent = null;
+    }
+    this.#clearPoints();
+  }
 }

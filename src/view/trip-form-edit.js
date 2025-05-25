@@ -1,6 +1,5 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
-import { DESTINATIONS } from '../mock/trip-data.js';
-import {EVENT_TYPES, OFFERS} from '../const';
+import {EVENT_TYPES} from '../const';
 import dayjs from 'dayjs';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
@@ -9,10 +8,17 @@ export default class TripFormEdit extends AbstractStatefulView {
   #submitHandler = null;
   #deleteHandler = null;
   #cancelHandler = null;
+  #destinations = [];
+  #offers = [];
+  #isDisabled = false;
+  #isSaving = false;
+  #isDeleting = false;
 
-  constructor(pointData) {
+  constructor(pointData, destinations = [], offers = []) {
     super();
-    this._state = pointData;
+    this._state = {...pointData};
+    this.#destinations = destinations;
+    this.#offers = offers;
     this._restoreHandlers();
   }
 
@@ -21,17 +27,17 @@ export default class TripFormEdit extends AbstractStatefulView {
     const startValue = dayjs(startTime).format('DD/MM/YY HH:mm');
     const endValue = dayjs(endTime).format('DD/MM/YY HH:mm');
     const offers = this.#getOffersForType(type);
-    const destination = DESTINATIONS.find((dest) => dest.id === this._state.destination) ?? {
+    const destination = this.#destinations.find((dest) => dest.id === this._state.destination) ?? {
       id: '',
       name: '',
       description: '',
-      photos: [],
+      pictures: [],
     };
     const offersMarkup = offers.length
       ? `<div class="event__available-offers">
           ${offers.map((offer) => `
             <div class="event__offer-selector">
-              <input class="event__offer-checkbox visually-hidden" id="event-offer-${offer.id}" type="checkbox" name="event-offer-${offer.id}" ${this._state.offers.some((o) => o.id === offer.id) ? 'checked' : ''}>
+              <input class="event__offer-checkbox visually-hidden" id="event-offer-${offer.id}" type="checkbox" name="event-offer-${offer.id}" ${this._state.offers.some((o) => o.id === offer.id) ? 'checked' : ''} ${this.#isDisabled ? 'disabled' : ''}>
               <label class="event__offer-label" for="event-offer-${offer.id}">
                 <span class="event__offer-title">${offer.title}</span>
                 &plus;&euro;&nbsp;
@@ -41,10 +47,10 @@ export default class TripFormEdit extends AbstractStatefulView {
         </div>`
       : '';
 
-    const photosMarkup = destination.photos?.length
+    const photosMarkup = destination.pictures?.length
       ? `<div class="event__photos-container">
            <div class="event__photos-tape">
-             ${destination.photos.map((photo) => `<img class="event__photo" src="${photo}" alt="Event photo">`).join('')}
+             ${destination.pictures.map((photo) => `<img class="event__photo" src="${photo.src}" alt=${photo.description}>`).join('')}
            </div>
          </div>`
       : '';
@@ -57,10 +63,10 @@ export default class TripFormEdit extends AbstractStatefulView {
                       <span class="visually-hidden">Choose event type</span>
                       <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
                   </label>
-                  <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
+                  <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox" ${this.#isDisabled ? 'disabled' : ''}>
 
                   <div class="event__type-list">
-                      <fieldset class="event__type-group">
+                      <fieldset class="event__type-group" ${this.#isDisabled ? 'disabled' : ''}>
                           <legend class="visually-hidden">Event type</legend>
                           ${EVENT_TYPES.map(({type: evtType, label}) => `
                             <div class="event__type-item">
@@ -71,6 +77,7 @@ export default class TripFormEdit extends AbstractStatefulView {
                                 name="event-type"
                                 value="${evtType}"
                                 ${evtType === type ? 'checked' : ''}
+                                ${this.#isDisabled ? 'disabled' : ''}
                               >
                               <label
                                 class="event__type-label event__type-label--${evtType}"
@@ -87,10 +94,13 @@ export default class TripFormEdit extends AbstractStatefulView {
                       ${type}
                   </label>
                   <input required class="event__input  event__input--destination" id="event-destination-1" type="text"
-                         name="event-destination" value="${destination.id}" list="destination-list-1">
+                         name="event-destination"
+                          value="${destination.name}"
+                          list="destination-list-1"
+                          ${this.#isDisabled ? 'disabled' : ''}>
                   <datalist id="destination-list-1">
-                      ${DESTINATIONS.map((dest) => `
-                        <option value="${dest.id}">${dest.name}</option>
+                      ${this.#destinations.map((dest) => `
+                        <option value="${dest.name}">${dest.name}</option>
                       `).join('')}
                   </datalist>
               </div>
@@ -98,11 +108,11 @@ export default class TripFormEdit extends AbstractStatefulView {
               <div class="event__field-group  event__field-group--time">
                   <label class="visually-hidden" for="event-start-time-1">From</label>
                   <input class="event__input  event__input--time" id="event-start-time-1" type="text"
-                         name="event-start-time" value="${startValue}">
+                         name="event-start-time" value="${startValue}" ${this.#isDisabled ? 'disabled' : ''}>
                   &mdash;
                   <label class="visually-hidden" for="event-end-time-1">To</label>
                   <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time"
-                         value="${endValue}">
+                         value="${endValue}" ${this.#isDisabled ? 'disabled' : ''}>
               </div>
 
               <div class="event__field-group  event__field-group--price">
@@ -111,12 +121,16 @@ export default class TripFormEdit extends AbstractStatefulView {
                       &euro;
                   </label>
                   <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price"
-                         value="${price}">
+                         value="${price}" ${this.#isDisabled ? 'disabled' : ''}>
               </div>
 
-              <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-              <button class="event__reset-btn" type="reset">Delete</button>
-              <button class="event__rollup-btn" type="button">
+              <button class="event__save-btn  btn  btn--blue" type="submit" ${this.#isDisabled ? 'disabled' : ''}>
+                ${this.#isSaving ? 'Saving...' : 'Save'}
+              </button>
+              <button class="event__reset-btn" type="reset" ${this.#isDisabled ? 'disabled' : ''}>
+                ${this.#isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+              <button class="event__rollup-btn" type="button" ${this.#isDisabled ? 'disabled' : ''}>
                   <span class="visually-hidden">Close event</span>
               </button>
           </header>
@@ -137,7 +151,8 @@ export default class TripFormEdit extends AbstractStatefulView {
   }
 
   #getOffersForType(type) {
-    return OFFERS[type] || [];
+    const offerGroup = this.#offers.find((group) => group.type === type);
+    return offerGroup ? offerGroup.offers : [];
   }
 
   #typeChangeHandler = (evt) => {
@@ -146,10 +161,10 @@ export default class TripFormEdit extends AbstractStatefulView {
   };
 
   #destinationChangeHandler = (evt) => {
-    const dest = DESTINATIONS.find((d) => d.id === evt.target.value);
+    const dest = this.#destinations.find((d) => d.name === evt.target.value);
     if (dest) {
       this.updateElement({
-        destination: evt.target.value,
+        destination: dest.id,
       });
     } else {
       this.updateElement({
@@ -252,5 +267,27 @@ export default class TripFormEdit extends AbstractStatefulView {
       defaultDate: this._state.endTime,
       onChange: this.#onEndTimeChange,
     });
+  }
+
+  setFormState({isDisabled = false, isSaving = false, isDeleting = false} = {}) {
+    this.#isDisabled = isDisabled;
+    this.#isSaving = isSaving;
+    this.#isDeleting = isDeleting;
+
+    this.element.querySelectorAll('input, button').forEach((element) => {
+      element.disabled = isDisabled;
+    });
+
+    if (isSaving) {
+      this.element.querySelector('.event__save-btn').textContent = 'Saving...';
+    } else {
+      this.element.querySelector('.event__save-btn').textContent = 'Save';
+    }
+
+    if (isDeleting) {
+      this.element.querySelector('.event__reset-btn').textContent = 'Deleting...';
+    } else {
+      this.element.querySelector('.event__reset-btn').textContent = 'Delete';
+    }
   }
 }

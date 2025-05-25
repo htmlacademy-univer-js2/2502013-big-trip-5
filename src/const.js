@@ -10,22 +10,13 @@ const EVENT_TYPES = [
   { type: 'restaurant', label: 'Restaurant' }
 ];
 
-
-const OFFERS = {
-  taxi: [
-    { id: 'offer-luggage', title: 'Add luggage', price: 50 },
-    { id: 'offer-comfort', title: 'Switch to comfort', price: 80 }
-  ],
-  drive: [
-    { id: 'offer-seats', title: 'Choose seats', price: 5 }
-  ],
-  flight: []
-};
-
 const USER_ACTION = {
   ADD_POINT: 'ADD_POINT',
   UPDATE_POINT: 'UPDATE_POINT',
   DELETE_POINT: 'DELETE_POINT',
 };
 
-export { OFFERS, EVENT_TYPES, USER_ACTION };
+const API_BASE_URL = 'https://24.objects.htmlacademy.pro/big-trip';
+const API_AUTHORIZATION = 'Basic 9a8ds7f9ashg9hj4a';
+
+export { EVENT_TYPES, USER_ACTION, API_BASE_URL, API_AUTHORIZATION };
