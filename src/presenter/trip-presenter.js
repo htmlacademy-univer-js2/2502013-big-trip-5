@@ -4,7 +4,7 @@ import TripEmpty from '../view/trip-empty.js';
 import LoadingView from '../view/loading.js';
 import ErrorView from '../view/error.js';
 import PointPresenter from './point-presenter.js';
-import {FilterType, UPDATE_TYPE} from '../model/filter-model.js';
+import {FILTER_TYPE, UPDATE_TYPE} from '../model/filter-model.js';
 import {remove} from '../framework/render';
 import {EVENT_TYPES, USER_ACTION} from '../const';
 import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
@@ -86,13 +86,13 @@ export default class TripPresenter {
     const filterType = this.#filterModel.getFilter();
     let points;
     switch (filterType) {
-      case FilterType.FUTURE:
+      case FILTER_TYPE.FUTURE:
         points = allPoints.filter((p) => new Date(p.startTime) > Date.now());
         break;
-      case FilterType.PRESENT:
+      case FILTER_TYPE.PRESENT:
         points = allPoints.filter((p) => new Date(p.startTime) <= Date.now() && new Date(p.endTime) >= Date.now());
         break;
-      case FilterType.PAST:
+      case FILTER_TYPE.PAST:
         points = allPoints.filter((p) => new Date(p.endTime) < Date.now());
         break;
       default:
@@ -148,7 +148,7 @@ export default class TripPresenter {
       this.#emptyComponent = null;
     }
     this.#currentSortType = 'day';
-    this.#filterModel.setFilter(UPDATE_TYPE.FILTER, FilterType.EVERYTHING);
+    this.#filterModel.setFilter(UPDATE_TYPE.FILTER, FILTER_TYPE.EVERYTHING);
     this.#handleModeChange();
     this.#newPointPresenter = new PointPresenter(
       this.#eventsListContainer,
