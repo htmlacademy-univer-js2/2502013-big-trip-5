@@ -18,11 +18,15 @@ export default class PointPresenter {
   #changeMode = null;
   #mode = null;
   #isNewPoint = false;
+  #destinations = [];
+  #offers = [];
 
-  constructor(container, changeData, changeMode) {
+  constructor(container, changeData, changeMode, destinations = [], offers = []) {
     this.#container = container;
     this.#changeData = changeData;
     this.#changeMode = changeMode;
+    this.#destinations = destinations;
+    this.#offers = offers;
   }
 
   init(point, isNewPoint = false) {
@@ -30,7 +34,7 @@ export default class PointPresenter {
     this.#isNewPoint = isNewPoint;
 
     const prevEditComponent = this.#editComponent;
-    this.#editComponent = new TripFormEditView(this.#point);
+    this.#editComponent = new TripFormEditView(this.#point, this.#destinations, this.#offers);
     this.#editComponent.setFormSubmitHandler(this.#handleFormSubmit);
     this.#editComponent.setCancelClickHandler(this.#handleCancelClick);
     this.#editComponent.setDeleteClickHandler(this.#handleDeleteClick);
@@ -38,7 +42,7 @@ export default class PointPresenter {
 
     if (!this.#isNewPoint) {
       const prevPointComponent = this.#pointComponent;
-      this.#pointComponent = new TripPointView(this.#point);
+      this.#pointComponent = new TripPointView(this.#point, this.#destinations, this.#offers);
       this.#pointComponent.setEditClickHandler(this.#handleEditClick);
       this.#pointComponent.setFavoriteClickHandler(this.#handleFavoriteClick);
       if (prevPointComponent === null) {
@@ -72,6 +76,7 @@ export default class PointPresenter {
   };
 
   #handleFormSubmit = (updatedPoint) => {
+    this.#editComponent.setFormState({isDisabled: true, isSaving: true});
     this.#changeData(this.#isNewPoint ? USER_ACTION.ADD_POINT : USER_ACTION.UPDATE_POINT, updatedPoint);
   };
 
@@ -84,6 +89,7 @@ export default class PointPresenter {
       this.#changeMode();
       return;
     }
+    this.#editComponent.setFormState({isDisabled: true, isDeleting: true});
     this.#changeData(USER_ACTION.DELETE_POINT, this.#point);
   };
 
@@ -111,6 +117,16 @@ export default class PointPresenter {
     if (this.#editComponent) {
       remove(this.#editComponent);
       this.#editComponent = null;
+    }
+  }
+
+  getPointId() {
+    return this.#point?.id;
+  }
+
+  resetFormState() {
+    if (this.#mode === Mode.EDITING && this.#editComponent) {
+      this.#editComponent.setFormState({isDisabled: false, isSaving: false, isDeleting: false});
     }
   }
 }
