@@ -1,5 +1,5 @@
-import FiltersView from '../view/filters.js';
-import {FILTER_TYPE, UPDATE_TYPE} from '../model/filter-model.js';
+import FiltersView from '../view/filter-view.js';
+import {FilterType, UpdateType} from '../model/filter-model.js';
 import {render} from '../render';
 import {remove} from '../framework/render';
 
@@ -9,69 +9,42 @@ export default class FilterPresenter {
   #filtersComponent;
   #container;
 
-  #handleFilterTypeChange = (filterType) => {
-    this.#filterModel.setFilter(UPDATE_TYPE.FILTER, filterType);
-  };
-
-  #handleModelEvent = (updateType) => {
-    if (updateType === UPDATE_TYPE.FILTER || updateType === UPDATE_TYPE.INIT || updateType === UPDATE_TYPE.UPDATE) {
-      this.init();
-    }
-  };
-
   constructor(filterContainer, filterModel, pointsModel) {
     this.#container = filterContainer;
     this.#filterModel = filterModel;
     this.#pointsModel = pointsModel;
     this.#filtersComponent = null;
-    this.#pointsModel.addObserver(this.#handleModelEvent);
-  }
 
-  #getFilterAvailability(filterType, points) {
-    if (!points.length) {
-      return false;
-    }
-
-    switch (filterType) {
-      case FILTER_TYPE.FUTURE:
-        return points.some((p) => new Date(p.startTime) > Date.now());
-      case FILTER_TYPE.PRESENT:
-        return points.some((p) => new Date(p.startTime) <= Date.now() && new Date(p.endTime) >= Date.now());
-      case FILTER_TYPE.PAST:
-        return points.some((p) => new Date(p.endTime) < Date.now());
-      case FILTER_TYPE.EVERYTHING:
-        return points.length > 0;
-      default:
-        return true;
-    }
+    this.#pointsModel.addObserver(this.#onModelEventHandler);
+    this.#filterModel.addObserver(this.#onModelEventHandler);
   }
 
   init() {
     const points = this.#pointsModel?.getPoints() || [];
     const filtersData = [
       {
-        name: FILTER_TYPE.EVERYTHING,
+        name: FilterType.EVERYTHING,
         label: 'Everything',
-        isChecked: this.#filterModel.getFilter() === FILTER_TYPE.EVERYTHING,
-        isDisabled: !this.#getFilterAvailability(FILTER_TYPE.EVERYTHING, points)
+        isChecked: this.#filterModel.getFilter() === FilterType.EVERYTHING,
+        isDisabled: !this.#getFilterAvailability(FilterType.EVERYTHING, points)
       },
       {
-        name: FILTER_TYPE.FUTURE,
+        name: FilterType.FUTURE,
         label: 'Future',
-        isChecked: this.#filterModel.getFilter() === FILTER_TYPE.FUTURE,
-        isDisabled: !this.#getFilterAvailability(FILTER_TYPE.FUTURE, points)
+        isChecked: this.#filterModel.getFilter() === FilterType.FUTURE,
+        isDisabled: !this.#getFilterAvailability(FilterType.FUTURE, points)
       },
       {
-        name: FILTER_TYPE.PRESENT,
+        name: FilterType.PRESENT,
         label: 'Present',
-        isChecked: this.#filterModel.getFilter() === FILTER_TYPE.PRESENT,
-        isDisabled: !this.#getFilterAvailability(FILTER_TYPE.PRESENT, points)
+        isChecked: this.#filterModel.getFilter() === FilterType.PRESENT,
+        isDisabled: !this.#getFilterAvailability(FilterType.PRESENT, points)
       },
       {
-        name: FILTER_TYPE.PAST,
+        name: FilterType.PAST,
         label: 'Past',
-        isChecked: this.#filterModel.getFilter() === FILTER_TYPE.PAST,
-        isDisabled: !this.#getFilterAvailability(FILTER_TYPE.PAST, points)
+        isChecked: this.#filterModel.getFilter() === FilterType.PAST,
+        isDisabled: !this.#getFilterAvailability(FilterType.PAST, points)
       }
     ];
 
@@ -80,9 +53,36 @@ export default class FilterPresenter {
     }
 
     this.#filtersComponent = new FiltersView(filtersData);
-    this.#filtersComponent.setFilterChangeHandler(this.#handleFilterTypeChange);
+    this.#filtersComponent.setFilterChangeHandler(this.#onFilterTypeChangeHandler);
     render(this.#filtersComponent, this.#container);
-
-    this.#filterModel.addObserver(this.#handleModelEvent);
   }
+
+  #getFilterAvailability(filterType, points) {
+    if (!points.length) {
+      return false;
+    }
+
+    switch (filterType) {
+      case FilterType.FUTURE:
+        return points.some((p) => new Date(p.startTime) > Date.now());
+      case FilterType.PRESENT:
+        return points.some((p) => new Date(p.startTime) <= Date.now() && new Date(p.endTime) >= Date.now());
+      case FilterType.PAST:
+        return points.some((p) => new Date(p.endTime) < Date.now());
+      case FilterType.EVERYTHING:
+        return points.length > 0;
+      default:
+        return true;
+    }
+  }
+
+  #onFilterTypeChangeHandler = (filterType) => {
+    this.#filterModel.setFilter(UpdateType.FILTER, filterType);
+  };
+
+  #onModelEventHandler = (updateType) => {
+    if (updateType === UpdateType.FILTER || updateType === UpdateType.INIT || updateType === UpdateType.UPDATE) {
+      this.init();
+    }
+  };
 }

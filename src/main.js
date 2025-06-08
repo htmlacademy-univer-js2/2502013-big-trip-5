@@ -1,4 +1,4 @@
-import FilterModel, {UPDATE_TYPE} from './model/filter-model.js';
+import FilterModel, {UpdateType} from './model/filter-model.js';
 import FilterPresenter from './presenter/filter-presenter.js';
 import TripPresenter from './presenter/trip-presenter.js';
 import TripInfoPresenter from './presenter/trip-info-presenter.js';
@@ -24,17 +24,17 @@ const tripMainElement = document.querySelector('.trip-main');
 const tripInfoPresenter = new TripInfoPresenter(tripMainElement, tripModel);
 tripInfoPresenter.init();
 
-const tripPresenter = new TripPresenter(tripModel, filterModel, eventsContainer, eventsListContainer);
+const tripPresenter = new TripPresenter(tripModel, filterModel, eventsContainer, eventsListContainer, createEventButton);
 
 createEventButton.addEventListener('click', (e) => {
   e.preventDefault();
-  tripPresenter.handleNewPointFormOpen();
+  tripPresenter.onNewPointFormOpenHandler();
 });
 
 tripModel.addObserver((updateType) => {
-  if (updateType === UPDATE_TYPE.INIT) {
+  if (updateType === UpdateType.INIT) {
     createEventButton.disabled = false;
-  } else if (updateType === UPDATE_TYPE.ERROR) {
+  } else if (updateType === UpdateType.ERROR) {
     createEventButton.disabled = true;
   }
 });
