@@ -1,6 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 
-export default class Filters extends AbstractView {
+export default class FilterView extends AbstractView {
   #filtersData;
   constructor(filtersData) {
     super();

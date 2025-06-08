@@ -1,5 +1,5 @@
 import {render, RenderPosition} from '../render.js';
-import TripInfoView from '../view/trip-info.js';
+import TripInfoView from '../view/trip-info-view.js';
 import {remove} from '../framework/render';
 
 export default class TripInfoPresenter {
@@ -11,7 +11,7 @@ export default class TripInfoPresenter {
     this.#container = container;
     this.#pointsModel = pointsModel;
 
-    this.#pointsModel.addObserver(this.#handleModelEvent);
+    this.#pointsModel.addObserver(this.#onModelEventHandler);
   }
 
   init() {
@@ -19,12 +19,22 @@ export default class TripInfoPresenter {
   }
 
   #renderTripInfo() {
+    const points = this.#pointsModel.getPoints();
+
+    if (points.length === 0) {
+      if (this.#tripInfoComponent) {
+        remove(this.#tripInfoComponent);
+        this.#tripInfoComponent = null;
+      }
+      return;
+    }
+
     if (this.#tripInfoComponent) {
       remove(this.#tripInfoComponent);
     }
 
     this.#tripInfoComponent = new TripInfoView(
-      this.#pointsModel.getPoints(),
+      points,
       this.#pointsModel.getDestinations(),
       this.#pointsModel.getOffers()
     );
@@ -32,7 +42,7 @@ export default class TripInfoPresenter {
     render(this.#tripInfoComponent, this.#container, RenderPosition.AFTERBEGIN);
   }
 
-  #handleModelEvent = () => {
+  #onModelEventHandler = () => {
     this.#renderTripInfo();
   };
 }

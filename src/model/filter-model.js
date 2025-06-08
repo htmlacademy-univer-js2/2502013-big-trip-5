@@ -1,13 +1,13 @@
 import Observable from '../framework/observable.js';
 
-export const FILTER_TYPE = {
+export const FilterType = {
   EVERYTHING: 'everything',
   FUTURE: 'future',
   PRESENT: 'present',
   PAST: 'past',
 };
 
-export const UPDATE_TYPE = {
+export const UpdateType = {
   FILTER: 'filter',
   LOADING: 'loading',
   ERROR: 'error',
@@ -16,7 +16,7 @@ export const UPDATE_TYPE = {
 };
 
 export default class FilterModel extends Observable {
-  #filter = FILTER_TYPE.EVERYTHING;
+  #filter = FilterType.EVERYTHING;
 
   getFilter() {
     return this.#filter;

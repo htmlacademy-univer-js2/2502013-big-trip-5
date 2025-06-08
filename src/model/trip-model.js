@@ -1,8 +1,8 @@
 import Observable from '../framework/observable.js';
 import { adaptPointToClient, adaptDestinationToClient, adaptOfferToClient } from '../adapter/data-adapter.js';
-import {UPDATE_TYPE} from "./filter-model";
+import {UpdateType} from './filter-model';
 
-const LoadingState = {
+export const LoadingState = {
   LOADING: 'LOADING',
   SUCCESS: 'SUCCESS',
   ERROR: 'ERROR',
@@ -27,7 +27,7 @@ export default class TripModel extends Observable {
   async init() {
     try {
       this.#loadingState = LoadingState.LOADING;
-      this._notify('loading');
+      this._notify(UpdateType.LOADING);
 
       const [points, destinations, offers] = await Promise.all([
         this.#apiService.getPoints(),
@@ -40,11 +40,13 @@ export default class TripModel extends Observable {
       this.#offers = offers.map(adaptOfferToClient);
 
       this.#loadingState = LoadingState.SUCCESS;
-      this._notify('init');
+      this._notify(UpdateType.INIT);
     } catch (err) {
+      this.#points = [];
+      this.#destinations = [];
+      this.#offers = [];
       this.#loadingState = LoadingState.ERROR;
-      this._notify('error');
-      throw err;
+      this._notify(UpdateType.ERROR);
     }
   }
 
@@ -69,7 +71,7 @@ export default class TripModel extends Observable {
       if (index !== -1) {
         this.#points[index] = adaptedPoint;
       }
-      this._notify(UPDATE_TYPE.UPDATE, this.#points);
+      this._notify(UpdateType.UPDATE, this.#points);
       return adaptedPoint;
     } catch (err) {
       throw new Error('Failed to update point');
@@ -82,7 +84,7 @@ export default class TripModel extends Observable {
       const adaptedPoint = adaptPointToClient(newPoint);
 
       this.#points.push(adaptedPoint);
-      this._notify(UPDATE_TYPE.UPDATE, this.#points);
+      this._notify(UpdateType.UPDATE, this.#points);
       return adaptedPoint;
     } catch (err) {
       throw new Error('Failed to add point');
@@ -93,13 +95,9 @@ export default class TripModel extends Observable {
     try {
       await this.#apiService.deletePoint({ id: pointId });
       this.#points = this.#points.filter((p) => p.id !== pointId);
-      this._notify(UPDATE_TYPE.UPDATE, this.#points);
+      this._notify(UpdateType.UPDATE, this.#points);
     } catch (err) {
       throw new Error('Failed to delete point');
     }
-  }
-
-  setPoints(points) {
-    this.#points = points;
   }
 }

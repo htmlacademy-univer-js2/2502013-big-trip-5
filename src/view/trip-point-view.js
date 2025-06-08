@@ -1,7 +1,7 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import dayjs from 'dayjs';
 
-export default class TripPoint extends AbstractView {
+export default class TripPointView extends AbstractView {
   #destinations = [];
   #offers = [];
 
@@ -18,11 +18,22 @@ export default class TripPoint extends AbstractView {
     const startTime = dayjs(this._point.startTime).format('HH:mm');
     const endTime = dayjs(this._point.endTime).format('HH:mm');
     const diffMs = dayjs(this._point.endTime).diff(dayjs(this._point.startTime));
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    const duration = `${hours.toString().padStart(2, '0')}H ${minutes.toString().padStart(2, '0')}M`;
+
+    const durationParts = [];
+    if (days > 0) {
+      durationParts.push(`${days.toString().padStart(2, '0')}D`);
+    }
+    if (days > 0 || hours > 0) {
+      durationParts.push(`${hours.toString().padStart(2, '0')}H`);
+    }
+    durationParts.push(`${minutes.toString().padStart(2, '0')}M`);
+    const duration = durationParts.join(' ');
+
     const dest = this.#destinations.find((d) => d.id === this._point.destination);
-    const title = `${this._point.type} to ${dest?.name || 'Unknown'}`;
+    const title = `${this._point.type} ${dest.name}`;
     const pointOffers = this.#offers.find((o) => o.type === this._point.type)?.offers.filter((offer) => this._point.offers.includes(offer.id)) || [];
     const offersMarkup = pointOffers.length
       ? `<h4 class="visually-hidden">Offers:</h4>

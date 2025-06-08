@@ -1,6 +1,6 @@
 import AbstractView from '../framework/view/abstract-view';
 import dayjs from 'dayjs';
-export default class TripInfo extends AbstractView {
+export default class TripInfoView extends AbstractView {
   #points = [];
   #destinations = [];
   #offers = [];
@@ -57,8 +57,8 @@ export default class TripInfo extends AbstractView {
     const endDate = dayjs(lastPoint.endTime);
 
     const isSameMonth = startDate.month() === endDate.month();
-    const formattedStartDate = startDate.format(isSameMonth ? 'MMM D' : 'MMM D');
-    const formattedEndDate = endDate.format('MMM D');
+    const formattedStartDate = startDate.format(isSameMonth ? 'D MMM' : 'D MMM');
+    const formattedEndDate = endDate.format('D MMM');
 
     return `<p class="trip-info__dates">${formattedStartDate}&nbsp;&mdash;&nbsp;${formattedEndDate}</p>`;
   }
